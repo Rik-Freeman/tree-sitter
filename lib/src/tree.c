@@ -18,13 +18,19 @@ TSTree *ts_tree_new(
   result->language_context_id = ts_language_current_context_id();
   result->unparseable_language = NULL;
 #endif
-  result->included_ranges = ts_calloc(included_range_count, sizeof(TSRange));
-  memcpy(result->included_ranges, included_ranges, included_range_count * sizeof(TSRange));
-  result->included_range_count = included_range_count;
+  if (included_range_count > 0 && included_ranges) {
+    result->included_ranges = ts_calloc(included_range_count, sizeof(TSRange));
+    memcpy(result->included_ranges, included_ranges, included_range_count * sizeof(TSRange));
+    result->included_range_count = included_range_count;
+  } else {
+    result->included_ranges = NULL;
+    result->included_range_count = 0;
+  }
   return result;
 }
 
 TSTree *ts_tree_copy(const TSTree *self) {
+  if (!self) return NULL;
   ts_subtree_retain(self->root);
   TSTree *result = ts_tree_new(
     self->root,
@@ -53,6 +59,7 @@ void ts_tree_delete(TSTree *self) {
 }
 
 TSNode ts_tree_root_node(const TSTree *self) {
+  if (!self) return ts_node_new(NULL, NULL, length_zero(), 0);
   return ts_node_new(self, &self->root, ts_subtree_padding(self->root), 0);
 }
 
@@ -61,11 +68,13 @@ TSNode ts_tree_root_node_with_offset(
   uint32_t offset_bytes,
   TSPoint offset_extent
 ) {
+  if (!self) return ts_node_new(NULL, NULL, length_zero(), 0);
   Length offset = {offset_bytes, offset_extent};
   return ts_node_new(self, &self->root, length_add(offset, ts_subtree_padding(self->root)), 0);
 }
 
 const TSLanguage *ts_tree_language(const TSTree *self) {
+  if (!self) return NULL;
 #ifdef __wasm__
   if (self->language_context_id != ts_language_current_context_id()) {
     TSTree *tree = (TSTree *)self;
@@ -95,6 +104,7 @@ const TSLanguage *ts_tree_language(const TSTree *self) {
 }
 
 void ts_tree_edit(TSTree *self, const TSInputEdit *edit) {
+  if (!self || !edit) return;
   for (unsigned i = 0; i < self->included_range_count; i++) {
     ts_range_edit(&self->included_ranges[i], edit);
   }

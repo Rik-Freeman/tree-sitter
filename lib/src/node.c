@@ -509,31 +509,37 @@ TSPoint ts_node_end_point(TSNode self) {
 }
 
 TSSymbol ts_node_symbol(TSNode self) {
+  if (ts_node_is_null(self) || !self.tree) return 0;
   TSSymbol symbol = ts_node__alias(&self);
   if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
   return ts_language_public_symbol(self.tree->language, symbol);
 }
 
 const char *ts_node_type(TSNode self) {
+  if (ts_node_is_null(self) || !self.tree) return NULL;
   TSSymbol symbol = ts_node__alias(&self);
   if (!symbol) symbol = ts_subtree_symbol(ts_node__subtree(self));
   return ts_language_symbol_name(self.tree->language, symbol);
 }
 
 const TSLanguage *ts_node_language(TSNode self) {
+  if (!self.tree) return NULL;
   return ts_tree_language(self.tree);
 }
 
 TSSymbol ts_node_grammar_symbol(TSNode self) {
+  if (ts_node_is_null(self)) return 0;
   return ts_subtree_symbol(ts_node__subtree(self));
 }
 
 const char *ts_node_grammar_type(TSNode self) {
+  if (ts_node_is_null(self) || !self.tree) return NULL;
   TSSymbol symbol = ts_subtree_symbol(ts_node__subtree(self));
   return ts_language_symbol_name(self.tree->language, symbol);
 }
 
 char *ts_node_string(TSNode self) {
+  if (ts_node_is_null(self) || !self.tree) return NULL;
   TSSymbol alias_symbol = ts_node__alias(&self);
   return ts_subtree_string(
     ts_node__subtree(self),
